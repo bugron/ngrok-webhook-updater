@@ -15,7 +15,7 @@
   "license": "MIT",
   "dependencies": {
     "dotenv": "^2.0.0",
-    "github4": "^0.5.3",
+    "github": "^2.2.0",
     "request": "^2.69.0"
   }
 }
