@@ -21,7 +21,8 @@ var ngrok = require('ngrok'),
     protocol: 'https',
     port: '443'
   }),
-  listenPort = 5000;
+  listenPort = 5000,
+  listenForConnections = true;
 
 github.authenticate({
   type: 'oauth',
@@ -73,9 +74,15 @@ ngrok.connect(listenPort, function (error, endpointURL) {
 
           console.log(
             'ngrok Webhook\'s Payload URL is updated from\n' + webhookURL +
-              ' to ' + endpointURL + '\n\n' +
-            'Ready for incoming connections!'
+              ' to ' + endpointURL
           );
+
+          if (listenForConnections) {
+            console.log('\nReady for incoming connections!');
+          } else {
+            ngrok.disconnect();
+            ngrok.kill();
+          }
         });
         break;
       }
