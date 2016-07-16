@@ -14,32 +14,27 @@ if (!process.env.SECRET_TOKEN) {
   );
 }
 
-var request = require('request'),
+var ngrok = require('ngrok'),
   GitHubApi = require('github'),
   github = new GitHubApi({
     host: 'api.github.com',
     protocol: 'https',
     port: '443'
   }),
-  options = {
-    url: 'http://127.0.0.1:4040/api/tunnels',
-    json: true,
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  };
+  listenPort = 5000;
 
 github.authenticate({
   type: 'oauth',
   token: process.env.GITHUB_TOKEN
 });
 
-request(options, function(error, response, body) {
+console.log('Attempting to start ngrok server...');
+ngrok.connect(listenPort, function (error, endpointURL) {
   if (error) {
     throw error;
   }
 
-  var endpointURL = body.tunnels[body.tunnels.length - 1].public_url;
+  console.log('ngrok server started. Listening on port ' + listenPort + '\n');
   console.log('Current ngrok endpoint URL is: ' + endpointURL);
 
   github.repos.getHooks({
@@ -47,16 +42,16 @@ request(options, function(error, response, body) {
     repo: 'TestPrBot',
   }, function(error, res) {
     if (error) {
-      throw err;
+      throw error;
     }
 
     for (var i = 0; i < res.length; i++) {
       var webhookURL = res[i].config.url;
       if (/ngrok\.io\/?$/ig.test(webhookURL)) {
-        console.log('Current ngrok Webhook URL is: ' + webhookURL);
+        console.log('Current ngrok Webhook\'s Payload URL is: ' + webhookURL);
 
         if ((new RegExp(endpointURL)).test(webhookURL)) {
-          console.log('Endpoint and webhook URL are identical, exiting.');
+          console.log('Endpoint and Payload URL are identical, exiting.');
           break;
         }
 
@@ -72,9 +67,14 @@ request(options, function(error, response, body) {
           name: res[i].name,
           config: newConfig
         }, function(error, res) {
+          if (error) {
+            throw error;
+          }
+
           console.log(
-            'Your Webhook\'s link is updated from ' + webhookURL +
-              ' to ' + endpointURL
+            'ngrok Webhook\'s Payload URL is updated from\n' + webhookURL +
+              ' to ' + endpointURL + '\n\n' +
+            'Ready for incoming connections!'
           );
         });
         break;
