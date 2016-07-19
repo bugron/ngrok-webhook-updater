@@ -1,1 +1,0 @@
-cd ../FccPrBot && npm start
