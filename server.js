@@ -1,16 +1,19 @@
-require('dotenv').load();
+var config = require('./secrets.json'), 
+  botPath = '../FccPrbot/run-server';
 
-if (!process.env.GITHUB_TOKEN) {
-  throw new Error(
-    'A GitHub token must be specified either as an environement variable\n' +
-    'or as a value in .env file to be able to change Webhook\'s URL.'
-  );
+if (!config.GITHUB_TOKEN) {
+  throw new Error([
+    'A GitHub token must be specified in secrets.json',
+    'file as the value of "GITHUB_TOKEN".',
+    'This has to be a token with a scope of',
+    '"admin:repo_hook" to be able to change Webhook\'s URL.'
+  ].join('\n'));
 }
 
-if (!process.env.SECRET_TOKEN) {
+if (!config.SECRET_TOKEN) {
   throw new Error(
-    'A SECRET token must be specified either as an environement variable\n' +
-    'or as a value in .env file to secure the webhook connection.'
+    'A SECRET token must be specified in secrets.json file\n' +
+    'as the value of "SECRET_TOKEN" to secure the webhook connection.'
   );
 }
 
@@ -26,7 +29,7 @@ var ngrok = require('ngrok'),
 
 github.authenticate({
   type: 'oauth',
-  token: process.env.GITHUB_TOKEN
+  token: config.GITHUB_TOKEN
 });
 
 console.log('Attempting to start ngrok server...');
@@ -59,7 +62,7 @@ ngrok.connect(listenPort, function (error, endpointURL) {
         var newConfig = {};
         newConfig = res[i].config;
         newConfig.url = endpointURL;
-        newConfig.secret = process.env.SECRET_TOKEN;
+        newConfig.secret = config.SECRET_TOKEN;
 
         github.repos.editHook({
           user: 'bugron',
@@ -79,6 +82,7 @@ ngrok.connect(listenPort, function (error, endpointURL) {
 
           if (listenForConnections) {
             console.log('\nReady for incoming connections!');
+            require(botPath);
           } else {
             ngrok.disconnect();
             ngrok.kill();

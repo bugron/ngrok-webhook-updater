@@ -1,19 +1,17 @@
 {
   "name": "ngrok-webhook-updater",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Automatically update ngrok's Github webhook URL",
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "prestart": "start /min FccPrBot-up.cmd",
-    "start": "PING -n 5 127.0.0.1>nul && node server.js"
+    "start": "node server.js"
   },
   "keywords": [],
   "author": "Arsen Melikyan",
   "homepage": "https://github.com/bugron/ngrok-webhook-updater",
   "license": "MIT",
   "dependencies": {
-    "dotenv": "^2.0.0",
     "github": "^2.2.0",
     "ngrok": "^2.2.1"
   }
