@@ -12,7 +12,7 @@
   "homepage": "https://github.com/bugron/ngrok-webhook-updater",
   "license": "MIT",
   "dependencies": {
-    "github": "^2.2.0",
+    "github": "^6.1.0",
     "ngrok": "^2.2.1"
   }
 }

@@ -43,7 +43,7 @@ ngrok.connect(listenPort, function (error, endpointURL) {
   console.log('Current ngrok endpoint URL is: ' + endpointURL);
 
   github.repos.getHooks({
-    user: 'bugron',
+    owner: 'bugron',
     repo: 'TestPrBot',
   }, function(error, res) {
     if (error) {
@@ -66,7 +66,7 @@ ngrok.connect(listenPort, function (error, endpointURL) {
         newConfig.secret = config.SECRET_TOKEN;
 
         github.repos.editHook({
-          user: 'bugron',
+          owner: 'bugron',
           repo: 'TestPrBot',
           id: res[i].id,
           name: res[i].name,
