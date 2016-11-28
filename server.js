@@ -25,7 +25,8 @@ var ngrok = require('ngrok'),
     port: '443'
   }),
   listenPort = 5000,
-  listenForConnections = true;
+  listenForConnections = true,
+  killTheServer = false;
 
 github.authenticate({
   type: 'oauth',
@@ -83,7 +84,7 @@ ngrok.connect(listenPort, function (error, endpointURL) {
           if (listenForConnections) {
             console.log('\nReady for incoming connections!');
             require(botPath);
-          } else {
+          } else if (killTheServer) {
             ngrok.disconnect();
             ngrok.kill();
           }
