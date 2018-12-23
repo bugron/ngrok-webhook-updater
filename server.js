@@ -1,7 +1,29 @@
-var config = require('./secrets.json'), 
-  botPath = '../FccPrbot/run-server';
+require('dotenv').config();
 
-if (!config.GITHUB_TOKEN) {
+const {
+  GITHUB_TOKEN,
+  SECRET_TOKEN,
+  BOT_PATH,
+  REPO_OWNER,
+  REPO_NAME,
+  PORT
+} = process.env;
+
+const ngrok = require('ngrok'),
+  github = new require('@octokit/rest')(),
+  listenPort = PORT || 5000,
+  listenForConnections = false,
+  killTheServer = true;
+
+if (!REPO_OWNER || !REPO_NAME) {
+  throw new Error('REPO_OWER and REPO_NAME environment variables should be set!');
+}
+
+if (listenForConnections && !BOT_PATH) {
+  throw new Error('BOT_PATH environment variable is empty!');
+}
+
+if (!GITHUB_TOKEN) {
   throw new Error([
     'A GitHub token must be specified in secrets.json',
     'file as the value of "GITHUB_TOKEN".',
@@ -10,87 +32,67 @@ if (!config.GITHUB_TOKEN) {
   ].join('\n'));
 }
 
-if (!config.SECRET_TOKEN) {
+if (!SECRET_TOKEN) {
   throw new Error(
     'A SECRET token must be specified in secrets.json file\n' +
     'as the value of "SECRET_TOKEN" to secure the webhook connection.'
   );
 }
 
-var ngrok = require('ngrok'),
-  GitHubApi = require('github'),
-  github = new GitHubApi({
-    host: 'api.github.com',
-    protocol: 'https',
-    port: '443'
-  }),
-  listenPort = 5000,
-  listenForConnections = true,
-  killTheServer = false;
-
 github.authenticate({
   type: 'oauth',
-  token: config.GITHUB_TOKEN
+  token: GITHUB_TOKEN
 });
 
 console.log('Attempting to start ngrok server...');
-ngrok.connect(listenPort, function (error, endpointURL) {
-  if (error) {
-    throw error;
+
+(async () => {
+  const endpointURL = await ngrok.connect(listenPort);
+
+  console.log(`ngrok server started. Listening on port ${listenPort}\n`);
+  console.log(`Current ngrok endpoint URL is: ${endpointURL}`);
+
+  const { data: repoHooks } = await github.repos.listHooks({
+    owner: REPO_OWNER,
+    repo: REPO_NAME,
+  });
+
+  const ngrokWebhooks = repoHooks
+    .filter(hook => hook.config.url.includes('ngrok.io'));
+
+  if (!ngrokWebhooks.length) {
+    return console.error('No ngrok GitHub webhooks are identified');
   }
 
-  console.log('ngrok server started. Listening on port ' + listenPort + '\n');
-  console.log('Current ngrok endpoint URL is: ' + endpointURL);
-
-  github.repos.getHooks({
-    owner: 'bugron',
-    repo: 'TestPrBot',
-  }, function(error, res) {
-    if (error) {
-      throw error;
+  for (let webhook of ngrokWebhooks) {
+    if (endpointURL === webhook.config.url) {
+      console.log('Endpoint and Payload URL are identical');
+      continue;
     }
 
-    for (var i = 0; i < res.length; i++) {
-      var webhookURL = res[i].config.url;
-      if (/ngrok\.io\/?$/ig.test(webhookURL)) {
-        console.log('Current ngrok Webhook\'s Payload URL is: ' + webhookURL);
+    await github.repos.updateHook({
+      owner: REPO_OWNER,
+      repo: REPO_NAME,
+      hook_id: webhook.id,
+      name: webhook.name,
+      config: Object.assign({}, webhook.config, {
+        url: endpointURL,
+        secret: SECRET_TOKEN
+      })
+    });
 
-        if ((new RegExp(endpointURL)).test(webhookURL)) {
-          console.log('Endpoint and Payload URL are identical, exiting.');
-          break;
-        }
+    console.log(
+      `ngrok Webhook's Payload URL is updated from ${webhook.config.url} to ${endpointURL}`
+    );
 
-        var newConfig = {};
-        newConfig = res[i].config;
-        newConfig.url = endpointURL;
-        newConfig.secret = config.SECRET_TOKEN;
-
-        github.repos.editHook({
-          owner: 'bugron',
-          repo: 'TestPrBot',
-          id: res[i].id,
-          name: res[i].name,
-          config: newConfig
-        }, function(error, res) {
-          if (error) {
-            throw error;
-          }
-
-          console.log(
-            'ngrok Webhook\'s Payload URL is updated from\n' + webhookURL +
-              ' to ' + endpointURL
-          );
-
-          if (listenForConnections) {
-            console.log('\nReady for incoming connections!');
-            require(botPath);
-          } else if (killTheServer) {
-            ngrok.disconnect();
-            ngrok.kill();
-          }
-        });
-        break;
-      }
+    if (listenForConnections) {
+      console.log('\nReady for incoming connections!');
+      require(BOT_PATH);
+    } else if (killTheServer) {
+      console.log('Disconnecting and killing ngrok server...');
+      await ngrok.disconnect();
+      await ngrok.kill();
+      console.log('Done, exiting');
     }
-  });
-});
+  }
+})();
