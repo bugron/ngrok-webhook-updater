@@ -1,11 +1,11 @@
 {
   "name": "ngrok-webhook-updater",
-  "version": "2.0.0",
+  "version": "0.0.1",
   "description": "Automatically update ngrok's Github webhook URL",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
     "ngrok",
