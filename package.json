@@ -20,5 +20,9 @@
     "@octokit/rest": "16.3.0",
     "dotenv": "6.2.0",
     "ngrok": "3.1.0"
+  },
+  "devDependencies": {
+    "eslint-config-airbnb-base": "^13.1.0",
+    "eslint-plugin-import": "^2.14.0"
   }
 }
