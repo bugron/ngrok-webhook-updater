@@ -5,5 +5,7 @@ module.exports = {
     'no-console': 'off',
     'comma-dangle': 'off',
     'consistent-return': 'off',
+    'import/order': 'off',
+    'operator-linebreak': 'off',
   }
 };
