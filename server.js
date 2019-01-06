@@ -6,15 +6,16 @@ const {
   REPO_OWNER,
   REPO_NAME,
   KILL_CONNECTION,
-  PORT
+  PORT,
 } = require('./config');
+const ngrok = require('ngrok');
+const GitClient = require('@octokit/rest');
 
-const ngrok = require('ngrok'),
-  github = new require('@octokit/rest')();
+const github = new GitClient();
 
 github.authenticate({
   type: 'oauth',
-  token: GITHUB_TOKEN
+  token: GITHUB_TOKEN,
 });
 
 (async () => {
@@ -36,27 +37,27 @@ github.authenticate({
   console.log(`ngrok server started. Listening on port ${PORT}\n`);
   console.log(`Current ngrok endpoint URL is: ${endpointURL}`);
 
-  for (let { id: hook_id, name, config } of ngrokWebhooks) {
+  ngrokWebhooks.forEach(async ({ id, name, config }) => {
     if (endpointURL === config.url) {
       console.log('Endpoint and Payload URL are identical');
-      continue;
+      return;
     }
 
     await github.repos.updateHook({
       owner: REPO_OWNER,
       repo: REPO_NAME,
-      hook_id,
+      hook_id: id,
       name,
       config: Object.assign({}, config, {
         url: endpointURL,
-        secret: SECRET_TOKEN
-      })
+        secret: SECRET_TOKEN,
+      }),
     });
 
     console.log(
       `ngrok Webhook's Payload URL is updated from ${config.url} to ${endpointURL}`
     );
-  }
+  });
 
   if (KILL_CONNECTION) {
     console.log('Disconnecting and killing ngrok server...');

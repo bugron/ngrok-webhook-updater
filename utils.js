@@ -10,7 +10,7 @@ module.exports = {
     if (!REPO_OWNER || !REPO_NAME) {
       throw new Error('REPO_OWER and REPO_NAME environment variables should be set!');
     }
-    
+
     if (!GITHUB_TOKEN) {
       throw new Error([
         'A GitHub token must be specified in environment variables',
@@ -19,7 +19,7 @@ module.exports = {
         '"admin:repo_hook" to be able to change Webhook\'s URL.'
       ].join('\n'));
     }
-    
+
     if (!SECRET_TOKEN) {
       throw new Error(
         'A SECRET token must be specified in environment variables \n' +

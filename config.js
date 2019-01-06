@@ -6,7 +6,7 @@ const {
   REPO_OWNER,
   REPO_NAME,
   KILL_CONNECTION,
-  PORT
+  PORT,
 } = process.env;
 
 module.exports = {
@@ -14,6 +14,6 @@ module.exports = {
   SECRET_TOKEN,
   REPO_OWNER,
   REPO_NAME,
-  KILL_CONNECTION: KILL_CONNECTION === 'true' ? true : false,
-  PORT: PORT || 5000
+  KILL_CONNECTION: KILL_CONNECTION === 'true',
+  PORT: PORT || 5000,
 };
